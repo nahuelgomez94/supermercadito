@@ -7,21 +7,28 @@ import (
 	"os"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
+	"github.com/bootcamp/supermercadito/internal/interfaces"
 )
 
-type productRepository struct {
+type ProductRepository struct {
+	interfaces.IProductRepository
 	productos []dto.Producto
+	idMax     int
 }
 
-var idMax int
+func NewProductRepository() *ProductRepository {
+	rta := &ProductRepository{}
+	rta.SetProductos()
+	return rta
+}
 
-func getNewId() (id int) {
-	idMax++
-	id = idMax
+func (pr *ProductRepository) getNewId() (id int) {
+	pr.idMax++
+	id = pr.idMax
 	return id
 }
 
-func (pr *productRepository) setProductos() (err error) {
+func (pr *ProductRepository) SetProductos() (err error) {
 	file, err := os.Open("./products.json")
 
 	if err != nil {
@@ -37,19 +44,19 @@ func (pr *productRepository) setProductos() (err error) {
 	err = json.Unmarshal(b, &pr.productos)
 
 	for _, p := range pr.productos {
-		if p.Id > idMax {
-			idMax = p.Id
+		if p.Id > pr.idMax {
+			pr.idMax = p.Id
 		}
 	}
 
 	return err
 }
 
-func (pr productRepository) getProductos() (rta []dto.Producto, err error) {
+func (pr ProductRepository) GetProductos() (rta []dto.Producto, err error) {
 	return pr.productos, nil
 }
 
-func (pr productRepository) getProductoById(id int) (rta dto.Producto, err error) {
+func (pr ProductRepository) GetProductoById(id int) (rta dto.Producto, err error) {
 	for _, p := range pr.productos {
 		if p.Id == id {
 			rta = p
@@ -60,7 +67,7 @@ func (pr productRepository) getProductoById(id int) (rta dto.Producto, err error
 	return rta, nil
 }
 
-func (pr productRepository) getProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
+func (pr ProductRepository) GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
 	for _, p := range pr.productos {
 		if p.Price >= price {
 			rta = append(rta, p)
@@ -70,7 +77,7 @@ func (pr productRepository) getProductsByMinPrice(price float64) (rta []dto.Prod
 	return rta, nil
 }
 
-func (pr *productRepository) validateExistsCodeProduct(code string) (err error) {
+func (pr *ProductRepository) ValidateExistsCodeProduct(code string) (err error) {
 	for _, p := range pr.productos {
 
 		if p.CodeValue == code {
@@ -82,9 +89,9 @@ func (pr *productRepository) validateExistsCodeProduct(code string) (err error) 
 	return err
 }
 
-func (pr *productRepository) setProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
+func (pr *ProductRepository) SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
 	savedProd = newProduct
-	savedProd.Id = getNewId()
+	savedProd.Id = pr.getNewId()
 	pr.productos = append(pr.productos, savedProd)
 
 	return savedProd, nil

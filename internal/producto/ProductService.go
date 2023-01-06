@@ -2,48 +2,52 @@ package producto
 
 import (
 	"errors"
-	"regexp"
-	"strconv"
-	"strings"
+	"time"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
+	"github.com/bootcamp/supermercadito/internal/interfaces"
 )
 
-var pr productRepository
-
-func InicializarDB() {
-	pr.setProductos()
+type ProductService struct {
+	pr interfaces.IProductRepository
 }
 
-func GetProductos() (rta []dto.Producto, err error) {
-	rta, err = pr.getProductos()
+func NewProductService(repo interfaces.IProductRepository) *ProductService {
+	return &ProductService{
+		pr: repo,
+	}
+}
+
+func (p ProductService) GetProductos() (rta []dto.Producto, err error) {
+	rta, err = p.pr.GetProductos()
+
 	return rta, err
 }
 
-func GetProductoById(id int) (rta dto.Producto, err error) {
+func (p ProductService) GetProductoById(id int) (rta dto.Producto, err error) {
 	if id <= 0 {
 		return dto.Producto{}, errors.New("el ID no puede ser igual o menor a 0")
 	}
 
-	rta, err = pr.getProductoById(id)
+	rta, err = p.pr.GetProductoById(id)
 	return rta, err
 }
 
-func GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
+func (p ProductService) GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
 	if price < 0 {
 		return nil, errors.New("los precios de los productos no pueden ser negativos")
 	}
 
-	rta, err = pr.getProductsByMinPrice(price)
+	rta, err = p.pr.GetProductsByMinPrice(price)
 	return rta, err
 }
 
-func SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
-	if err = pr.validateExistsCodeProduct(newProduct.CodeValue); err != nil {
+func (p ProductService) SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
+	if err = p.pr.ValidateExistsCodeProduct(newProduct.CodeValue); err != nil {
 		return dto.Producto{}, err
 	}
 
-	if err = validateFormatDate(newProduct.Expiration); err != nil {
+	if err = p.validateFormatDate(newProduct.Expiration); err != nil {
 		return dto.Producto{}, err
 	}
 
@@ -51,35 +55,11 @@ func SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
 		return dto.Producto{}, errors.New("el precio del producto no puede ser negativo")
 	}
 
-	savedProd, err = pr.setProducto(newProduct)
+	savedProd, err = p.pr.SetProducto(newProduct)
 	return savedProd, err
 }
 
-func validateFormatDate(date string) (err error) {
-	//re := regexp.MustCompile("(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)")
-	re := regexp.MustCompile("([0-9]{2})([/])([0-9]{2})([/])([0-9]{4})")
-	if !re.MatchString(date) {
-		//c.String(401, "Formato de fecha de expiracion incorrecta")
-		return errors.New("formato de fecha de expiracion incorrecta")
-	} else {
-		reA := strings.Split(date, "/")
-		dia, errConvDia := strconv.Atoi(reA[0])
-		mes, errConvMes := strconv.Atoi(reA[1])
-
-		if errConvDia != nil || errConvMes != nil {
-			//c.String(401, "No se pudo convertir el día de la fecha de expiracion")
-			return errors.New("no se pudo convertir el día de la fecha de expiracion")
-		}
-
-		if dia < 0 || dia > 31 {
-			//c.String(401, "Dia en fecha de expiracion no valido")
-			return errors.New("dia en fecha de expiracion no valido")
-		}
-
-		if mes > 12 || mes < 0 {
-			return errors.New("mes en fecha de expiracion no valido")
-		}
-	}
-
-	return nil
+func (p ProductService) validateFormatDate(date string) (err error) {
+	_, err = time.Parse("02/01/2006", date)
+	return err
 }

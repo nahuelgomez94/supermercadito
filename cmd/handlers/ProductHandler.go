@@ -8,8 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetProductos(c *gin.Context) {
-	rta, err := producto.GetProductos()
+type ProductHandler struct {
+	// Interfaz?
+	ProductService producto.ProductService
+}
+
+func (ph *ProductHandler) GetProductos(c *gin.Context) {
+	rta, err := ph.ProductService.GetProductos()
 	if err != nil {
 		c.JSON(500, err.Error())
 	}
@@ -17,7 +22,7 @@ func GetProductos(c *gin.Context) {
 	c.JSON(200, rta)
 }
 
-func GetProductoById(c *gin.Context) {
+func (ph *ProductHandler) GetProductoById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -25,7 +30,7 @@ func GetProductoById(c *gin.Context) {
 		return
 	}
 
-	rta, err := producto.GetProductoById(id)
+	rta, err := ph.ProductService.GetProductoById(id)
 
 	if err != nil {
 		c.JSON(500, err.Error())
@@ -39,7 +44,7 @@ func GetProductoById(c *gin.Context) {
 	c.JSON(200, rta)
 }
 
-func SetProducto(c *gin.Context) {
+func (ph *ProductHandler) SetProducto(c *gin.Context) {
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
@@ -48,7 +53,7 @@ func SetProducto(c *gin.Context) {
 		return
 	}
 
-	savedProd, err := producto.SetProducto(dto.Producto(prodReq))
+	savedProd, err := ph.ProductService.SetProducto(dto.Producto(prodReq))
 
 	if err != nil {
 		c.JSON(500, err.Error())
@@ -58,7 +63,7 @@ func SetProducto(c *gin.Context) {
 	c.JSON(200, savedProd)
 }
 
-func GetProductsByMinPrice(c *gin.Context) {
+func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
 	pPrice := c.Query("pricegt")
 	price, err := strconv.ParseFloat(pPrice, 10)
 
@@ -67,7 +72,7 @@ func GetProductsByMinPrice(c *gin.Context) {
 		return
 	}
 
-	rta, err := producto.GetProductsByMinPrice(price)
+	rta, err := ph.ProductService.GetProductsByMinPrice(price)
 
 	if err != nil {
 		c.JSON(500, err.Error())

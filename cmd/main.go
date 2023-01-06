@@ -13,8 +13,6 @@ func main() {
 		c.String(200, "pong")
 	})
 
-	producto.InicializarDB()
-
 	// Armo los endpoint del server
 	SetProductGroupRoutes(server)
 
@@ -22,10 +20,14 @@ func main() {
 }
 
 func SetProductGroupRoutes(server *gin.Engine) {
-	p := server.Group("/products")
+	var productHandler handlers.ProductHandler
 
-	p.GET("/", handlers.GetProductos)
-	p.GET("/:id", handlers.GetProductoById)
-	p.GET("/search", handlers.GetProductsByMinPrice)
-	p.POST("/", handlers.SetProducto)
+	repo := producto.NewProductRepository()
+	productHandler.ProductService = *producto.NewProductService(repo)
+
+	p := server.Group("/products")
+	p.GET("/", productHandler.GetProductos)
+	p.GET("/:id", productHandler.GetProductoById)
+	p.GET("/search", productHandler.GetProductsByMinPrice)
+	p.POST("/", productHandler.SetProducto)
 }
