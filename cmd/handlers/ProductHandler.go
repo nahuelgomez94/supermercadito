@@ -40,7 +40,7 @@ func GetProductoById(c *gin.Context) {
 }
 
 func SetProducto(c *gin.Context) {
-	var prodReq dto.Producto
+	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
 	if err != nil {

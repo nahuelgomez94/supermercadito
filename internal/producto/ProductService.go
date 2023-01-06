@@ -56,16 +56,17 @@ func SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
 }
 
 func validateFormatDate(date string) (err error) {
-	re := regexp.MustCompile("(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)")
-
+	//re := regexp.MustCompile("(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)")
+	re := regexp.MustCompile("([0-9]{2})([/])([0-9]{2})([/])([0-9]{4})")
 	if !re.MatchString(date) {
 		//c.String(401, "Formato de fecha de expiracion incorrecta")
 		return errors.New("Formato de fecha de expiracion incorrecta")
 	} else {
 		reA := strings.Split(date, "/")
 		dia, errConvDia := strconv.Atoi(reA[0])
+		mes, errConvMes := strconv.Atoi(reA[1])
 
-		if errConvDia != nil {
+		if errConvDia != nil || errConvMes != nil {
 			//c.String(401, "No se pudo convertir el día de la fecha de expiracion")
 			return errors.New("No se pudo convertir el día de la fecha de expiracion")
 		}
@@ -73,6 +74,10 @@ func validateFormatDate(date string) (err error) {
 		if dia < 0 || dia > 31 {
 			//c.String(401, "Dia en fecha de expiracion no valido")
 			return errors.New("Dia en fecha de expiracion no valido")
+		}
+
+		if mes > 12 || mes < 0 {
+			return errors.New("Mes en fecha de expiracion no valido")
 		}
 	}
 
