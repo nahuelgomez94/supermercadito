@@ -9,6 +9,7 @@ import (
 )
 
 type ProductService struct {
+	interfaces.IProductService
 	pr interfaces.IProductRepository
 }
 

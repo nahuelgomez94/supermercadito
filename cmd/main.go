@@ -20,6 +20,7 @@ func main() {
 }
 
 func SetProductGroupRoutes(server *gin.Engine) {
+
 	var productHandler handlers.ProductHandler
 
 	repo := producto.NewProductRepository()
