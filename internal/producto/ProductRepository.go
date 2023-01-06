@@ -5,9 +5,6 @@ import (
 	"errors"
 	"io"
 	"os"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
 )
@@ -16,29 +13,43 @@ type productRepository struct {
 	productos []dto.Producto
 }
 
-func (pr *productRepository) SetProductos() {
+var idMax int
+
+func getNewId() (id int) {
+	idMax++
+	id = idMax
+	return id
+}
+
+func (pr *productRepository) setProductos() (err error) {
 	file, err := os.Open("./products.json")
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	b, err := io.ReadAll(file)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	json.Unmarshal(b, &pr.productos)
+	err = json.Unmarshal(b, &pr.productos)
+
+	for _, p := range pr.productos {
+		if p.Id > idMax {
+			idMax = p.Id
+		}
+	}
+
+	return err
 }
 
-func (pr productRepository) getProductos() []dto.Producto {
-	return pr.productos
+func (pr productRepository) getProductos() (rta []dto.Producto, err error) {
+	return pr.productos, nil
 }
 
-func (pr productRepository) getProductoById(id int) dto.Producto {
-	var rta dto.Producto
-
+func (pr productRepository) getProductoById(id int) (rta dto.Producto, err error) {
 	for _, p := range pr.productos {
 		if p.Id == id {
 			rta = p
@@ -46,66 +57,34 @@ func (pr productRepository) getProductoById(id int) dto.Producto {
 		}
 	}
 
-	return rta
+	return rta, nil
 }
 
-func (pr productRepository) getProductsByMinPrice(price float64) []dto.Producto {
-	var rta []dto.Producto
-
+func (pr productRepository) getProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
 	for _, p := range pr.productos {
 		if p.Price >= price {
 			rta = append(rta, p)
 		}
 	}
 
-	return rta
+	return rta, nil
 }
 
-func (pr *productRepository) SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
-	savedProd = newProduct
-
-	var id int
-	var errCode bool
-
+func (pr *productRepository) validateExistsCodeProduct(code string) (err error) {
 	for _, p := range pr.productos {
-		if p.Id > id {
-			id = p.Id
-		}
 
-		if p.CodeValue == newProduct.CodeValue {
-			errCode = true
+		if p.CodeValue == code {
+			err = errors.New("El còdigo ya existe en la base de datos")
 			break
 		}
 	}
 
-	if errCode {
-		//c.String(401, "El código del producto ya existe")
-		return dto.Producto{}, errors.New("El código del producto ya existe")
-	}
+	return err
+}
 
-	id++
-	savedProd.Id = id
-
-	re := regexp.MustCompile("(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)")
-
-	if !re.MatchString(savedProd.Expiration) {
-		//c.String(401, "Formato de fecha de expiracion incorrecta")
-		return dto.Producto{}, errors.New("Formato de fecha de expiracion incorrecta")
-	} else {
-		reA := strings.Split(savedProd.Expiration, "/")
-		dia, errConvDia := strconv.Atoi(reA[0])
-
-		if errConvDia != nil {
-			//c.String(401, "No se pudo convertir el día de la fecha de expiracion")
-			return dto.Producto{}, errors.New("No se pudo convertir el día de la fecha de expiracion")
-		}
-
-		if dia < 0 || dia > 31 {
-			//c.String(401, "Dia en fecha de expiracion no valido")
-			return dto.Producto{}, errors.New("Dia en fecha de expiracion no valido")
-		}
-	}
-
+func (pr *productRepository) setProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
+	savedProd = newProduct
+	savedProd.Id = getNewId()
 	pr.productos = append(pr.productos, savedProd)
 
 	return savedProd, nil

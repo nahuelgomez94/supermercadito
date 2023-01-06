@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bootcamp/supermercadito/cmd/handlers"
+	"github.com/bootcamp/supermercadito/internal/producto"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,8 +13,20 @@ func main() {
 		c.String(200, "pong")
 	})
 
-	handlers.SetProductos()
-	handlers.SetProductGroupRoutes(server)
+	// Inicializo DB
+	producto.SetProductos()
+
+	// Armo los endpoint del server
+	SetProductGroupRoutes(server)
 
 	server.Run(":8080")
+}
+
+func SetProductGroupRoutes(server *gin.Engine) {
+	p := server.Group("/products")
+
+	p.GET("/", handlers.GetProductos)
+	p.GET("/:id", handlers.GetProductoById)
+	p.GET("/search", handlers.GetProductsByMinPrice)
+	p.POST("/", handlers.SetProducto)
 }
