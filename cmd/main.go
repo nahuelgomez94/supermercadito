@@ -13,8 +13,7 @@ func main() {
 		c.String(200, "pong")
 	})
 
-	// Inicializo DB
-	producto.SetProductos()
+	producto.InicializarDB()
 
 	// Armo los endpoint del server
 	SetProductGroupRoutes(server)

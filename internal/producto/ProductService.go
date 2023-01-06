@@ -11,7 +11,7 @@ import (
 
 var pr productRepository
 
-func SetProductos() {
+func InicializarDB() {
 	pr.setProductos()
 }
 
