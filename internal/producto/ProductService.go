@@ -30,6 +30,10 @@ func GetProductoById(id int) (rta dto.Producto, err error) {
 }
 
 func GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
+	if price < 0 {
+		return nil, errors.New("Los precios de los productos no pueden ser negativos")
+	}
+
 	rta, err = pr.getProductsByMinPrice(price)
 	return rta, err
 }
