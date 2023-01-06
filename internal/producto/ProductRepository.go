@@ -74,7 +74,7 @@ func (pr *productRepository) validateExistsCodeProduct(code string) (err error) 
 	for _, p := range pr.productos {
 
 		if p.CodeValue == code {
-			err = errors.New("El còdigo ya existe en la base de datos")
+			err = errors.New("el còdigo ya existe en la base de datos")
 			break
 		}
 	}

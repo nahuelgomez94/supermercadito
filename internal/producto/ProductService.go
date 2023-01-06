@@ -22,7 +22,7 @@ func GetProductos() (rta []dto.Producto, err error) {
 
 func GetProductoById(id int) (rta dto.Producto, err error) {
 	if id <= 0 {
-		return dto.Producto{}, errors.New("El ID no puede ser igual o menor a 0")
+		return dto.Producto{}, errors.New("el ID no puede ser igual o menor a 0")
 	}
 
 	rta, err = pr.getProductoById(id)
@@ -31,7 +31,7 @@ func GetProductoById(id int) (rta dto.Producto, err error) {
 
 func GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
 	if price < 0 {
-		return nil, errors.New("Los precios de los productos no pueden ser negativos")
+		return nil, errors.New("los precios de los productos no pueden ser negativos")
 	}
 
 	rta, err = pr.getProductsByMinPrice(price)
@@ -48,7 +48,7 @@ func SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
 	}
 
 	if newProduct.Price < 0 {
-		return dto.Producto{}, errors.New("El precio del producto no puede ser negativo")
+		return dto.Producto{}, errors.New("el precio del producto no puede ser negativo")
 	}
 
 	savedProd, err = pr.setProducto(newProduct)
@@ -60,7 +60,7 @@ func validateFormatDate(date string) (err error) {
 	re := regexp.MustCompile("([0-9]{2})([/])([0-9]{2})([/])([0-9]{4})")
 	if !re.MatchString(date) {
 		//c.String(401, "Formato de fecha de expiracion incorrecta")
-		return errors.New("Formato de fecha de expiracion incorrecta")
+		return errors.New("formato de fecha de expiracion incorrecta")
 	} else {
 		reA := strings.Split(date, "/")
 		dia, errConvDia := strconv.Atoi(reA[0])
@@ -68,16 +68,16 @@ func validateFormatDate(date string) (err error) {
 
 		if errConvDia != nil || errConvMes != nil {
 			//c.String(401, "No se pudo convertir el día de la fecha de expiracion")
-			return errors.New("No se pudo convertir el día de la fecha de expiracion")
+			return errors.New("no se pudo convertir el día de la fecha de expiracion")
 		}
 
 		if dia < 0 || dia > 31 {
 			//c.String(401, "Dia en fecha de expiracion no valido")
-			return errors.New("Dia en fecha de expiracion no valido")
+			return errors.New("dia en fecha de expiracion no valido")
 		}
 
 		if mes > 12 || mes < 0 {
-			return errors.New("Mes en fecha de expiracion no valido")
+			return errors.New("mes en fecha de expiracion no valido")
 		}
 	}
 
