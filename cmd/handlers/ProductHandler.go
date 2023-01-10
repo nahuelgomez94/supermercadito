@@ -9,8 +9,13 @@ import (
 )
 
 type ProductHandler struct {
-	// Interfaz?
 	ProductService producto.ProductService
+}
+
+func NewProductHandler(ps producto.ProductService) (ph *ProductHandler) {
+	return &ProductHandler{
+		ProductService: ps,
+	}
 }
 
 func (ph *ProductHandler) GetProductos(c *gin.Context) {
@@ -34,6 +39,7 @@ func (ph *ProductHandler) GetProductoById(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(500, err.Error())
+		return
 	}
 
 	if rta.Id != id {
@@ -53,7 +59,9 @@ func (ph *ProductHandler) SetProducto(c *gin.Context) {
 		return
 	}
 
-	savedProd, err := ph.ProductService.SetProducto(dto.Producto(prodReq))
+	var prodConvert dto.Producto
+	prodConvert.SetValues(prodReq)
+	savedProd, err := ph.ProductService.SetProducto(dto.Producto(prodConvert))
 
 	if err != nil {
 		c.JSON(500, err.Error())
@@ -85,4 +93,56 @@ func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
 	}
 
 	c.JSON(200, rta)
+}
+
+func (ph *ProductHandler) UpdateProduct(c *gin.Context) {
+	var prodReq dto.ProductoRequest
+	err := c.ShouldBindJSON(&prodReq)
+
+	if err != nil {
+		c.String(500, "Solicitud inválida")
+		return
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.String(500, "Parametro ID inválido")
+		return
+	}
+
+	prod, err := ph.ProductService.UpdateProduct(id, prodReq)
+
+	if err != nil {
+		c.String(500, err.Error())
+		return
+	}
+
+	c.JSON(200, prod)
+}
+
+func (ph *ProductHandler) PatchProduct(c *gin.Context) {
+	var cambios dto.Producto
+	err := c.ShouldBindJSON(&cambios)
+
+	if err != nil {
+		c.String(500, "Error al interpretar el objeto")
+		return
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.String(500, "Id Inválido")
+		return
+	}
+
+	prodPatcheado, err := ph.ProductService.PatchProduct(id, cambios)
+
+	if err != nil {
+		c.String(500, err.Error())
+		return
+	}
+
+	c.JSON(200, prodPatcheado)
 }

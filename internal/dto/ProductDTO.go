@@ -15,7 +15,17 @@ type Producto struct {
 	Name        string  `json:"name"`
 	Quantity    int     `json:"quantity"`
 	CodeValue   string  `json:"code_value"`
-	IsPublished bool    `json:"is_published"`
+	IsPublished *bool   `json:"is_published"`
 	Expiration  string  `json:"expiration"`
 	Price       float64 `json:"price"`
+}
+
+func (p *Producto) SetValues(prod ProductoRequest) (prodResult Producto, err error) {
+	p.Name = prod.Name
+	p.Quantity = prod.Quantity
+	p.CodeValue = prod.CodeValue
+	p.IsPublished = &prod.IsPublished
+	p.Expiration = prod.Expiration
+	p.Price = prod.Price
+	return *p, nil
 }
