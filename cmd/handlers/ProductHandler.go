@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
@@ -20,16 +22,42 @@ func NewProductHandler(ps producto.ProductService) (ph *ProductHandler) {
 	}
 }
 
+func (ph *ProductHandler) TokenValidation(c *gin.Context) (auth bool, err error) {
+	TOKEN := os.Getenv("TOKEN")
+
+	hToken := c.GetHeader("token")
+
+	if hToken == TOKEN {
+		return true, nil
+	} else {
+		return false, errors.New("No auth")
+	}
+}
+
 func (ph *ProductHandler) GetProductos(c *gin.Context) {
-	rta, err := ph.ProductService.GetProductos()
-	if err != nil {
-		c.JSON(500, err.Error())
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
 	}
 
-	c.JSON(200, rta)
+	rta, err := ph.ProductService.GetProductos()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	c.JSON(http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) GetProductoById(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -49,15 +77,22 @@ func (ph *ProductHandler) GetProductoById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, rta)
+	c.JSON(http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) SetProducto(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
 	if err != nil {
-		c.String(401, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -66,90 +101,118 @@ func (ph *ProductHandler) SetProducto(c *gin.Context) {
 	savedProd, err := ph.ProductService.SetProducto(dto.Producto(prodConvert))
 
 	if err != nil {
-		c.JSON(500, err.Error())
+		c.JSON(http.StatusNotAcceptable, err.Error())
 		return
 	}
 
-	c.JSON(200, savedProd)
+	c.JSON(http.StatusOK, savedProd)
 }
 
 func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	pPrice := c.Query("pricegt")
 	price, err := strconv.ParseFloat(pPrice, 10)
 
 	if err != nil {
-		c.String(500, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	rta, err := ph.ProductService.GetProductsByMinPrice(price)
 
 	if err != nil {
-		c.JSON(500, err.Error())
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if len(rta) == 0 {
-		c.String(200, "No hay productos con ese precio")
+		c.String(http.StatusOK, "No hay productos con ese precio")
 		return
 	}
 
-	c.JSON(200, rta)
+	c.JSON(http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) UpdateProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
 	if err != nil {
-		c.String(500, "Solicitud inválida")
+		c.String(http.StatusBadRequest, "Solicitud inválida")
 		return
 	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.String(500, "Parametro ID inválido")
+		c.String(http.StatusBadRequest, "Parametro ID inválido")
 		return
 	}
 
 	prod, err := ph.ProductService.UpdateProduct(id, prodReq)
 
 	if err != nil {
-		c.String(500, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(200, prod)
+	c.JSON(http.StatusOK, prod)
 }
 
 func (ph *ProductHandler) PatchProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var cambios dto.Producto
 	err := c.ShouldBindJSON(&cambios)
 
 	if err != nil {
-		c.String(500, "Error al interpretar el objeto")
+		c.String(http.StatusBadRequest, "Error al interpretar el objeto")
 		return
 	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.String(500, "Id Inválido")
+		c.String(http.StatusBadRequest, "Id Inválido")
 		return
 	}
 
 	prodPatcheado, err := ph.ProductService.PatchProduct(id, cambios)
 
 	if err != nil {
-		c.String(500, err.Error())
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(200, prodPatcheado)
+	c.JSON(http.StatusOK, prodPatcheado)
 }
 
 func (ph *ProductHandler) DeleteProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {

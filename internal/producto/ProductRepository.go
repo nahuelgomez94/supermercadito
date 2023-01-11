@@ -1,10 +1,7 @@
 package producto
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
-	"os"
 	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
@@ -13,52 +10,43 @@ import (
 
 type ProductRepository struct {
 	interfaces.IProductRepository
-	productos []dto.Producto
-	idMax     int
+	Storage interfaces.IProductStorage
 }
 
-func NewProductRepository() *ProductRepository {
+func NewProductRepository(storage interfaces.IProductStorage) *ProductRepository {
 	rta := &ProductRepository{}
-	rta.SetProductos()
+	rta.Storage = storage
 	return rta
 }
 
 func (pr *ProductRepository) getNewId() (id int) {
-	pr.idMax++
-	id = pr.idMax
-	return id
-}
+	productos, _ := pr.Storage.Get()
 
-func (pr *ProductRepository) SetProductos() (err error) {
-	file, err := os.Open("./products.json")
-
-	if err != nil {
-		return err
-	}
-
-	b, err := io.ReadAll(file)
-
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(b, &pr.productos)
-
-	for _, p := range pr.productos {
-		if p.Id > pr.idMax {
-			pr.idMax = p.Id
+	id = 0
+	for _, p := range productos {
+		if id < p.Id {
+			id = p.Id
 		}
 	}
 
-	return err
+	id++
+	return id
 }
 
 func (pr ProductRepository) GetProductos() (rta []dto.Producto, err error) {
-	return pr.productos, nil
+	productos, err := pr.Storage.Get()
+
+	return productos, err
 }
 
 func (pr ProductRepository) GetProductoById(id int) (rta dto.Producto, err error) {
-	for _, p := range pr.productos {
+	productos, err := pr.Storage.Get()
+
+	if err != nil {
+		return dto.Producto{}, err
+	}
+
+	for _, p := range productos {
 		if p.Id == id {
 			rta = p
 			break
@@ -73,7 +61,13 @@ func (pr ProductRepository) GetProductoById(id int) (rta dto.Producto, err error
 }
 
 func (pr ProductRepository) GetProductsByMinPrice(price float64) (rta []dto.Producto, err error) {
-	for _, p := range pr.productos {
+	productos, err := pr.Storage.Get()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range productos {
 		if p.Price >= price {
 			rta = append(rta, p)
 		}
@@ -83,8 +77,13 @@ func (pr ProductRepository) GetProductsByMinPrice(price float64) (rta []dto.Prod
 }
 
 func (pr *ProductRepository) ValidateExistsCodeProduct(code string) (err error) {
-	for _, p := range pr.productos {
+	productos, err := pr.Storage.Get()
 
+	if err != nil {
+		return err
+	}
+
+	for _, p := range productos {
 		if p.CodeValue == code {
 			err = errors.New("el còdigo ya existe en la base de datos")
 			break
@@ -97,16 +96,29 @@ func (pr *ProductRepository) ValidateExistsCodeProduct(code string) (err error) 
 func (pr *ProductRepository) SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error) {
 	savedProd = newProduct
 	savedProd.Id = pr.getNewId()
-	pr.productos = append(pr.productos, savedProd)
 
-	return savedProd, nil
+	productos, err := pr.Storage.Get()
+
+	if err != nil {
+		return dto.Producto{}, err
+	}
+
+	productos = append(productos, savedProd)
+
+	err = pr.Storage.Set(productos)
+	return savedProd, err
 }
 
 func (pr *ProductRepository) UpdateProduct(id int, prod dto.Producto) (savedProd dto.Producto, err error) {
-	for i, p := range pr.productos {
+	productos, err := pr.Storage.Get()
+
+	for i, p := range productos {
 		if p.Id == id {
-			pr.productos[i] = prod
-			return pr.productos[i], err
+			productos[i] = prod
+
+			err = pr.Storage.Set(productos)
+
+			return productos[i], err
 		}
 	}
 
@@ -114,7 +126,13 @@ func (pr *ProductRepository) UpdateProduct(id int, prod dto.Producto) (savedProd
 }
 
 func (pr *ProductRepository) ValidateUniqueCode(id int, code string) (err error) {
-	for _, p := range pr.productos {
+	productos, err := pr.Storage.Get()
+
+	if err != nil {
+		return err
+	}
+
+	for _, p := range productos {
 		if id != p.Id && code == p.CodeValue {
 			msg := "El código ya existe en la base de datos. Producto ID: " + strconv.FormatInt(int64(p.Id), 10)
 			return errors.New(msg)
@@ -125,10 +143,18 @@ func (pr *ProductRepository) ValidateUniqueCode(id int, code string) (err error)
 }
 
 func (pr *ProductRepository) DeleteProduct(id int) (err error) {
-	for i, p := range pr.productos {
+	productos, err := pr.Storage.Get()
+
+	if err != nil {
+		return err
+	}
+
+	for i, p := range productos {
 		if p.Id == id {
-			pr.productos = append(pr.productos[:i], pr.productos[i+1:]...)
-			return nil
+			productos = append(productos[:i], productos[i+1:]...)
+
+			err = pr.Storage.Set(productos)
+			return err
 		}
 	}
 
