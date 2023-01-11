@@ -9,4 +9,7 @@ type IProductRepository interface {
 	GetProductsByMinPrice(price float64) (rta []dto.Producto, err error)
 	ValidateExistsCodeProduct(code string) (err error)
 	SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error)
+	UpdateProduct(id int, producto dto.Producto) (savedProd dto.Producto, err error)
+	ValidateUniqueCode(id int, code string) (err error)
+	DeleteProduct(id int) (err error)
 }

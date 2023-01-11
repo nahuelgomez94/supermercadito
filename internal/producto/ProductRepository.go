@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
 	"github.com/bootcamp/supermercadito/internal/interfaces"
@@ -64,6 +65,10 @@ func (pr ProductRepository) GetProductoById(id int) (rta dto.Producto, err error
 		}
 	}
 
+	if rta.Id != id {
+		return rta, errors.New("No se ha encontrado el recurso")
+	}
+
 	return rta, nil
 }
 
@@ -95,4 +100,37 @@ func (pr *ProductRepository) SetProducto(newProduct dto.Producto) (savedProd dto
 	pr.productos = append(pr.productos, savedProd)
 
 	return savedProd, nil
+}
+
+func (pr *ProductRepository) UpdateProduct(id int, prod dto.Producto) (savedProd dto.Producto, err error) {
+	for i, p := range pr.productos {
+		if p.Id == id {
+			pr.productos[i] = prod
+			return pr.productos[i], err
+		}
+	}
+
+	return dto.Producto{}, errors.New("No existe el producto en la base de datos")
+}
+
+func (pr *ProductRepository) ValidateUniqueCode(id int, code string) (err error) {
+	for _, p := range pr.productos {
+		if id != p.Id && code == p.CodeValue {
+			msg := "El código ya existe en la base de datos. Producto ID: " + strconv.FormatInt(int64(p.Id), 10)
+			return errors.New(msg)
+		}
+	}
+
+	return nil
+}
+
+func (pr *ProductRepository) DeleteProduct(id int) (err error) {
+	for i, p := range pr.productos {
+		if p.Id == id {
+			pr.productos = append(pr.productos[:i], pr.productos[i+1:]...)
+			return nil
+		}
+	}
+
+	return errors.New("No se encontró el producto indicado")
 }
