@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/bootcamp/supermercadito/internal/producto"
 	"github.com/bootcamp/supermercadito/internal/routers"
@@ -19,8 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Error al cargar el archivo .env")
 	}
-
-	fmt.Println(os.Getenv("TOKEN"))
 
 	server.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")

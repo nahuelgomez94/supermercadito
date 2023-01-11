@@ -152,7 +152,9 @@ func (pr *ProductRepository) DeleteProduct(id int) (err error) {
 	for i, p := range productos {
 		if p.Id == id {
 			productos = append(productos[:i], productos[i+1:]...)
-			return nil
+
+			err = pr.Storage.Set(productos)
+			return err
 		}
 	}
 
