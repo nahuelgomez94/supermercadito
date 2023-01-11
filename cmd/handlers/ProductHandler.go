@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
@@ -20,7 +22,26 @@ func NewProductHandler(ps producto.ProductService) (ph *ProductHandler) {
 	}
 }
 
+func (ph *ProductHandler) TokenValidation(c *gin.Context) (auth bool, err error) {
+	TOKEN := os.Getenv("TOKEN")
+
+	hToken := c.GetHeader("token")
+
+	if hToken == TOKEN {
+		return true, nil
+	} else {
+		return false, errors.New("No auth")
+	}
+}
+
 func (ph *ProductHandler) GetProductos(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	rta, err := ph.ProductService.GetProductos()
 	if err != nil {
 		c.JSON(500, err.Error())
@@ -30,6 +51,13 @@ func (ph *ProductHandler) GetProductos(c *gin.Context) {
 }
 
 func (ph *ProductHandler) GetProductoById(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -53,6 +81,13 @@ func (ph *ProductHandler) GetProductoById(c *gin.Context) {
 }
 
 func (ph *ProductHandler) SetProducto(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
@@ -74,6 +109,13 @@ func (ph *ProductHandler) SetProducto(c *gin.Context) {
 }
 
 func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	pPrice := c.Query("pricegt")
 	price, err := strconv.ParseFloat(pPrice, 10)
 
@@ -98,6 +140,13 @@ func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
 }
 
 func (ph *ProductHandler) UpdateProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
@@ -124,6 +173,13 @@ func (ph *ProductHandler) UpdateProduct(c *gin.Context) {
 }
 
 func (ph *ProductHandler) PatchProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	var cambios dto.Producto
 	err := c.ShouldBindJSON(&cambios)
 
@@ -150,6 +206,13 @@ func (ph *ProductHandler) PatchProduct(c *gin.Context) {
 }
 
 func (ph *ProductHandler) DeleteProduct(c *gin.Context) {
+	auth, errorAuth := ph.TokenValidation(c)
+
+	if errorAuth != nil && auth == false {
+		c.JSON(http.StatusUnauthorized, errorAuth)
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
