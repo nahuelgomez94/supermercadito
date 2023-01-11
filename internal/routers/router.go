@@ -26,4 +26,5 @@ func (r *Router) SetProductGroupRoutes(server *gin.Engine) {
 	p.POST("/", productHandler.SetProducto)
 	p.PUT("/:id", productHandler.UpdateProduct)
 	p.PATCH("/:id", productHandler.PatchProduct)
+	p.DELETE("/:id", productHandler.DeleteProduct)
 }

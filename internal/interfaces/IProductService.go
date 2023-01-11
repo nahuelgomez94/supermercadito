@@ -12,4 +12,5 @@ type IProductService interface {
 	validatePrice(price float64) (err error)
 	UpdateProduct(id int, producto dto.ProductoRequest) (rta dto.Producto, err error)
 	PatchProduct(id int, producto dto.Producto) (savedProdu dto.Producto, err error)
+	DeleteProduct(id int) (err error)
 }

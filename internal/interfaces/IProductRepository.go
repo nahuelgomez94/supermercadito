@@ -11,4 +11,5 @@ type IProductRepository interface {
 	SetProducto(newProduct dto.Producto) (savedProd dto.Producto, err error)
 	UpdateProduct(id int, producto dto.Producto) (savedProd dto.Producto, err error)
 	ValidateUniqueCode(id int, code string) (err error)
+	DeleteProduct(id int) (err error)
 }

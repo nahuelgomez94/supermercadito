@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
@@ -145,4 +147,22 @@ func (ph *ProductHandler) PatchProduct(c *gin.Context) {
 	}
 
 	c.JSON(200, prodPatcheado)
+}
+
+func (ph *ProductHandler) DeleteProduct(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+	}
+
+	err = ph.ProductService.DeleteProduct(id)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		c.String(http.StatusNotModified, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

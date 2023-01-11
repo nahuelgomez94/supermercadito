@@ -155,3 +155,11 @@ func (p ProductService) validatePrice(price float64) (err error) {
 
 	return nil
 }
+
+func (p ProductService) DeleteProduct(id int) (err error) {
+	_, err = p.GetProductoById(id)
+
+	err = p.pr.DeleteProduct(id)
+
+	return err
+}

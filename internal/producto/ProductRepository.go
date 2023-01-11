@@ -123,3 +123,14 @@ func (pr *ProductRepository) ValidateUniqueCode(id int, code string) (err error)
 
 	return nil
 }
+
+func (pr *ProductRepository) DeleteProduct(id int) (err error) {
+	for i, p := range pr.productos {
+		if p.Id == id {
+			pr.productos = append(pr.productos[:i], pr.productos[i+1:]...)
+			return nil
+		}
+	}
+
+	return errors.New("No se encontró el producto indicado")
+}
