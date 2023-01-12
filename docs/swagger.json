@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This API Handle MELI Products.",
+        "description": "This API Handle MELI Supermercadito.",
         "title": "MELI Bootcamp API",
         "termsOfService": "https://developers.mercadolibre.com.ar/es_ar/terminos-y-condiciones",
         "contact": {
@@ -17,7 +17,7 @@
     "paths": {
         "/products": {
             "get": {
-                "description": "get products",
+                "description": "Get All Products",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "List products",
+                "summary": "List all products",
                 "parameters": [
                     {
                         "type": "string",
@@ -37,7 +37,11 @@
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
             }
         }
     }

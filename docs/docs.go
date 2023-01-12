@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/products": {
             "get": {
-                "description": "get products",
+                "description": "Get All Products",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "Products"
                 ],
-                "summary": "List products",
+                "summary": "List all products",
                 "parameters": [
                     {
                         "type": "string",
@@ -46,7 +46,11 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
             }
         }
     }
@@ -59,7 +63,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "MELI Bootcamp API",
-	Description:      "This API Handle MELI Products.",
+	Description:      "This API Handle MELI Supermercadito.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

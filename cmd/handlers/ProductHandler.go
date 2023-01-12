@@ -26,12 +26,13 @@ func NewProductHandler(ps producto.ProductService) (ph *ProductHandler) {
 }
 
 // ListProducts godoc
-// @Summary List products
+// @Summary List all products
 // @Tags Products
-// @Description get products
+// @Description Get All Products
 // @Accept  json
 // @Produce  json
 // @Param token header string true "token"
+// @Success 200
 // @Router /products [get]
 func (ph *ProductHandler) GetProductos(c *gin.Context) {
 	rta, err := ph.ProductService.GetProductos()
