@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/bootcamp/supermercadito/cmd/handlers"
+	"github.com/bootcamp/supermercadito/internal/middlewares"
 	"github.com/bootcamp/supermercadito/internal/producto"
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,7 @@ func (r *Router) SetProductGroupRoutes(server *gin.Engine) {
 	productHandler := handlers.NewProductHandler(*service)
 
 	p := server.Group("/products")
+	p.Use(middlewares.TokenValidation())
 	p.GET("/", productHandler.GetProductos)
 	p.GET("/:id", productHandler.GetProductoById)
 	p.GET("/search", productHandler.GetProductsByMinPrice)

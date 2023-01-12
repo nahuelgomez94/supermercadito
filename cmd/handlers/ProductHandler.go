@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/bootcamp/supermercadito/internal/dto"
 	"github.com/bootcamp/supermercadito/internal/producto"
+	"github.com/bootcamp/supermercadito/internal/web"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,83 +14,57 @@ type ProductHandler struct {
 	ProductService producto.ProductService
 }
 
+const (
+	ErrIdFormatInvalid = "ID con formato inválido"
+	ErrNoFoundId       = "No se ha encontrado el ID especificado"
+)
+
 func NewProductHandler(ps producto.ProductService) (ph *ProductHandler) {
 	return &ProductHandler{
 		ProductService: ps,
 	}
 }
 
-func (ph *ProductHandler) TokenValidation(c *gin.Context) (auth bool, err error) {
-	TOKEN := os.Getenv("TOKEN")
-
-	hToken := c.GetHeader("token")
-
-	if hToken == TOKEN {
-		return true, nil
-	} else {
-		return false, errors.New("No auth")
-	}
-}
-
 func (ph *ProductHandler) GetProductos(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
+	rta, err := ph.ProductService.GetProductos()
+	if err != nil {
+		web.NewErrorResponse(c, http.StatusBadRequest, "", err.Error())
 		return
 	}
 
-	rta, err := ph.ProductService.GetProductos()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	c.JSON(http.StatusOK, rta)
+	web.NewResponse(c, http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) GetProductoById(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
-
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.String(500, "ID con formato inválido")
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", ErrIdFormatInvalid)
 		return
 	}
 
 	rta, err := ph.ProductService.GetProductoById(id)
 
 	if err != nil {
-		c.JSON(500, err.Error())
+		web.NewErrorResponse(c, http.StatusInternalServerError, "InternalServerError", err.Error())
 		return
 	}
 
 	if rta.Id != id {
-		c.String(500, "No se ha encontrado el ID especificado")
+		web.NewErrorResponse(c, http.StatusNotFound, "NotFound", ErrNoFoundId)
 		return
 	}
 
-	c.JSON(http.StatusOK, rta)
+	web.NewResponse(c, http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) SetProducto(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
 
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
 
@@ -101,131 +73,101 @@ func (ph *ProductHandler) SetProducto(c *gin.Context) {
 	savedProd, err := ph.ProductService.SetProducto(dto.Producto(prodConvert))
 
 	if err != nil {
-		c.JSON(http.StatusNotAcceptable, err.Error())
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, savedProd)
+	web.NewResponse(c, http.StatusOK, savedProd)
 }
 
 func (ph *ProductHandler) GetProductsByMinPrice(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
 
 	pPrice := c.Query("pricegt")
 	price, err := strconv.ParseFloat(pPrice, 10)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
 
 	rta, err := ph.ProductService.GetProductsByMinPrice(price)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
-
-	if len(rta) == 0 {
-		c.String(http.StatusOK, "No hay productos con ese precio")
-		return
-	}
-
-	c.JSON(http.StatusOK, rta)
+	web.NewResponse(c, http.StatusOK, rta)
 }
 
 func (ph *ProductHandler) UpdateProduct(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
-
 	var prodReq dto.ProductoRequest
 	err := c.ShouldBindJSON(&prodReq)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, "Solicitud inválida")
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.String(http.StatusBadRequest, "Parametro ID inválido")
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", ErrIdFormatInvalid)
 		return
 	}
 
 	prod, err := ph.ProductService.UpdateProduct(id, prodReq)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		web.NewErrorResponse(c, http.StatusInternalServerError, "InternalServerError", "")
 		return
 	}
 
-	c.JSON(http.StatusOK, prod)
+	web.NewResponse(c, http.StatusOK, prod)
 }
 
 func (ph *ProductHandler) PatchProduct(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
 
 	var cambios dto.Producto
 	err := c.ShouldBindJSON(&cambios)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, "Error al interpretar el objeto")
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", err.Error())
 		return
 	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.String(http.StatusBadRequest, "Id Inválido")
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", ErrIdFormatInvalid)
 		return
 	}
 
 	prodPatcheado, err := ph.ProductService.PatchProduct(id, cambios)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		web.NewErrorResponse(c, http.StatusInternalServerError, "InternalServerError", "")
 		return
 	}
 
-	c.JSON(http.StatusOK, prodPatcheado)
+	web.NewResponse(c, http.StatusOK, prodPatcheado)
 }
 
 func (ph *ProductHandler) DeleteProduct(c *gin.Context) {
-	auth, errorAuth := ph.TokenValidation(c)
-
-	if errorAuth != nil && auth == false {
-		c.JSON(http.StatusUnauthorized, errorAuth)
-		return
-	}
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		web.NewErrorResponse(c, http.StatusBadRequest, "BadRequest", ErrIdFormatInvalid)
+		return
 	}
 
 	err = ph.ProductService.DeleteProduct(id)
 
 	if err != nil {
-		fmt.Println(err.Error())
-		c.String(http.StatusNotModified, err.Error())
+		web.NewErrorResponse(c, http.StatusInternalServerError, "InternalServerError", "")
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	web.NewResponse(c, http.StatusNoContent, nil)
+
 }
